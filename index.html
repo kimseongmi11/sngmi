@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>장애물 피하기 게임</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      margin: 20px;
+      background-color: #f5f5f5;
+    }
+
+    #character {
+      width: 50px;
+      height: 50px;
+      background-color: #3498db;
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .obstacle {
+      width: 30px;
+      height: 30px;
+      background-color: #e74c3c;
+      position: absolute;
+      animation: moveObstacle 1s linear infinite;
+    }
+
+    @keyframes moveObstacle {
+      to {
+        transform: translateY(100vh);
+      }
+    }
+
+    #score {
+      font-size: 36px; /* 크기를 늘림 */
+      margin-top: 20px;
+      text-align: left; /* 왼쪽 정렬로 변경 */
+      position: absolute;
+      top: 20px;
+      left: 20px; /* 왼쪽으로 이동 */
+    }
+  </style>
+</head>
+<body>
+
+  <div id="character"></div>
+  <div id="score">Score: <span id="scoreValue">0</span></div>
+
+  <script>
+    const character = document.getElementById('character');
+    const scoreElement = document.getElementById('scoreValue');
+    let score = 0;
+    let gameStarted = false;
+    let obstacleSpeed = 1000; // 초기 장애물 속도
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    function handleKeyDown(event) {
+      if (event.code === 'Space') {
+        if (!gameStarted) {
+          startGame();
+        } else {
+          moveCharacter(event);
+        }
+      }
+      // 추가된 부분: 방향키로 오브젝트 좌우 이동
+      switch (event.key) {
+        case 'ArrowLeft':
+          moveObstacles('left');
+          break;
+        case 'ArrowRight':
+          moveObstacles('right');
+          break;
+      }
+    }
+
+    function startGame() {
+      gameStarted = true;
+      setInterval(createObstacle, obstacleSpeed); // 초기 속도로 시작
+      setInterval(increaseObstacleSpeed, 5000); // 5초마다 장애물 속도 증가
+    }
+
+    function moveCharacter(event) {
+      const characterPosition = character.getBoundingClientRect();
+
+      switch (event.key) {
+        case 'ArrowLeft':
+          if (characterPosition.left > 0) {
+            character.style.left = `${characterPosition.left - 10}px`;
+          }
+          break;
+
+        case 'ArrowRight':
+          if (characterPosition.right < window.innerWidth) {
+            character.style.left = `${characterPosition.left + 10}px`;
+          }
+          break;
+      }
+    }
+
+    function createObstacle() {
+      const obstacle = document.createElement('div');
+      obstacle.classList.add('obstacle');
+      obstacle.style.left = `${Math.random() * window.innerWidth}px`;
+      document.body.appendChild(obstacle);
+
+      obstacle.addEventListener('animationiteration', () => {
+        obstacle.remove();
+        score += 10;
+        scoreElement.textContent = score;
+      });
+
+      setTimeout(() => {
+        const characterPosition = character.getBoundingClientRect();
+        const obstaclePosition = obstacle.getBoundingClientRect();
+
+        if (
+          obstaclePosition.bottom > characterPosition.top &&
+          obstaclePosition.top < characterPosition.bottom &&
+          obstaclePosition.right > characterPosition.left &&
+          obstaclePosition.left < characterPosition.right
+        ) {
+          alert(`게임 오버! 점수: ${score}`);
+          resetGame();
+        }
+      }, 1000);
+    }
+
+    function increaseObstacleSpeed() {
+      obstacleSpeed -= 100; // 장애물 속도를 감소시켜 더 빠르게 만듭니다.
+      clearInterval(); // 기존의 setInterval을 초기화합니다.
+      setInterval(createObstacle, obstacleSpeed); // 새로운 속도로 setInterval을 다시 설정합니다.
+    }
+
+    function resetGame() {
+      gameStarted = false;
+      score = 0;
+      scoreElement.textContent = score;
+
+      // Remove all obstacles
+      const obstacles = document.querySelectorAll('.obstacle');
+      obstacles.forEach((obstacle) => obstacle.remove());
+    }
+  </script>
+
+</body>
+</html>
